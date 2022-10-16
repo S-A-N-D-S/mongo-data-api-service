@@ -6,6 +6,7 @@ import com.soumya.mongo.api.mongoapi.control.Methods;
 import com.soumya.mongo.api.mongoapi.properties.MongoDataApiProperties;
 import com.soumya.mongo.api.mongoapi.requestentity.Insert;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -30,19 +31,23 @@ public class DataTransactionServiceImpl implements DataTransactionService {
      * @return List Of Data for given Collection.
      */
     @Override
+    @Async
     public List<Object> insertData(String collectionName, Map<String,Object> dataToInsert) {
         List<Object> data = new ArrayList<>();
         isAccesible();
         if(accessFlag.equals(true)){
            //call the function that needs to be called.
             // at the end set @accessFlag = false
-            mongoDataAPIClient.insertData(mongoDataApiProperties.getMongoDbUrl(),mongoDataApiProperties.get);
+            Insert insert = insertMapping(dataToInsert,collectionName);
+            mongoDataAPIClient.insertData(mongoDataApiProperties.getMongoDbUrl(),
+                    mongoDataApiProperties.getApiKey(),
+                    insert);
             accessFlag = false;
         }
         return data;
     }
 
-    @
+    @Async
     private void isAccesible() {
         StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
         int i = 0;
@@ -69,10 +74,21 @@ public class DataTransactionServiceImpl implements DataTransactionService {
      * @return
      */
     @Override
+    @Async
     public List<Object> insertData(Insert insert) {
-        return null;
+        List<Object> data = new ArrayList<>();
+        isAccesible();
+        if(accessFlag.equals(true)){
+            //call the function that needs to be called.
+            // at the end set @accessFlag = false
+            data.add(mongoDataAPIClient.insertData(mongoDataApiProperties.getMongoDbUrl(),
+                    mongoDataApiProperties.getApiKey(),
+                    insert));
+            accessFlag = false;
+        }
+        return data;
     }
-
+    @Async
     private Insert insertMapping(Map<String,Object> dataToInsert , String collectionName) {
         Insert insert = new Insert();
         insert.setDocument(dataToInsert);
